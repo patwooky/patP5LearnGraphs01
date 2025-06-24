@@ -24,6 +24,7 @@ function draw() {
   let thisFrame = frameCount * 0.013;
   let sineWaveHeight = 50;
   let nseSeed = 1234; // Seed for random number generation
+  let rampShift = frameCount * 0.0011; // background noise points shift speed
 
   // Draw axes for Stream A (top graph)
   let streamAStartY = 40;
@@ -41,11 +42,13 @@ function draw() {
   let numStrokePts = 500;
   let strokeInterval = streamAWidth / float(numStrokePts) * 0.5;
   for (let i = 0; i < streamAWidth; i++) {
-    let normalisedX = i / streamAWidth; // Normalize x position
-    stroke(255, 0, 0, getRampValue(normalisedX)*255*0.3); // Set stroke color based on normalized x position
+    // make normalisedX wrap around 0-1
+    let normalisedX = abs(i / streamAWidth + rampShift) % 1.0; // Normalize x position
+    // Set stroke color based on normalized x position
+    stroke(255, 0, 0, map(getRampValue(normalisedX),0,1,0.15,1)*255*0.3); 
     ellipse(
       streamAStartWidth + strokeInterval * i,
-      streamAStartY + noise(thisFrame + i * sin(321+i+thisFrame*0.1) * 0.05 + nseSeed) * streamAHeight,
+      streamAStartY + noise((thisFrame*0.15 + i*1) * 1.1 + nseSeed) * streamAHeight,
       5, 5
     );
   }
@@ -77,11 +80,13 @@ function draw() {
   // Plot points for Stream B
   stroke(0, 0, 255);
   for (let i = 0; i < streamBWidth; i++) {
-    let normalisedX = i / streamBWidth; // Normalize x position
-    stroke(0, 0, 255, getRampValue(normalisedX)*255*0.3); // Set stroke color based on normalized x position
+    // make normalisedX wrap around 0-1
+    let normalisedX = abs(i / streamAWidth - rampShift) % 1.0; // Normalize x position
+    // Set stroke color based on normalized x position
+    stroke(0, 0, 255, map(getRampValue(normalisedX),0,1,0.15,1)*255*0.3); 
     ellipse(
       streamBStartWidth + strokeInterval * i,
-      streamBStartY + noise(thisFrame + i * sin(321+i+thisFrame*0.1) * 0.05 + nseSeed) * streamBHeight,
+      streamBStartY + noise(((311+thisFrame)*0.15 + i*1) * 1.1 + nseSeed) * streamBHeight,
       5, 5
     );
   }
@@ -94,7 +99,7 @@ function draw() {
   beginShape();
   for (let x = 0; x < streamBWidth; x++) {
     let y = streamBStartY + (streamBHeight * 0.5) +
-      sin(thisFrame + curveXOffset + x * 0.02) * sineWaveHeight;
+      sin(-thisFrame - curveXOffset + x * 0.02) * sineWaveHeight;
     let nse = noise(thisFrame*10 + x * 0.13) * 50; // Add noise to y position
     vertex(streamBStartWidth + x, y + nse); // plot the vertex
   }
