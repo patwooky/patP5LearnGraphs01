@@ -6,6 +6,19 @@ function setup() {
   createCanvas(canvasWidth, 800);
 }
 
+// define a custom ramp with 5 sampled values
+let customRamp = [0, 0.15, 0.55, 1, 1, 1, 0.55, 0.15, 0];
+
+// Function to interpolate between ramp values
+function getRampValue(input) {
+  let index = floor(input * (customRamp.length - 1)); // Get the base index
+  let nextIndex = min(index + 1, customRamp.length - 1); // Ensure next index is within bounds
+  let t = (input * (customRamp.length - 1)) % 1; // Fractional part for interpolation
+
+  // Linear interpolation between the two sampled values
+  return lerp(customRamp[index], customRamp[nextIndex], t);
+}
+
 function draw() {
   background(220);
   let thisFrame = frameCount * 0.013;
@@ -26,15 +39,16 @@ function draw() {
   // Plot points for Stream A
   stroke(255, 0, 0);
   let numStrokePts = 500;
-  let strokeInterval = streamAWidth / float(numStrokePts);
-  // console.log("strokeInterval: " + strokeInterval);
-  // for (let i = 0; i < numStrokePts; i++) {
-  //   ellipse(
-  //     streamAStartWidth + strokeInterval * i,
-  //     random(streamAStartY, streamAEndY),
-  //     5, 5
-  //   );
-  // }
+  let strokeInterval = streamAWidth / float(numStrokePts) * 0.5;
+  for (let i = 0; i < streamAWidth; i++) {
+    let normalisedX = i / streamAWidth; // Normalize x position
+    stroke(255, 0, 0, getRampValue(normalisedX)*255*0.3); // Set stroke color based on normalized x position
+    ellipse(
+      streamAStartWidth + strokeInterval * i,
+      streamAStartY + noise(thisFrame + i * sin(321+i+thisFrame*0.1) * 0.05 + nseSeed) * streamAHeight,
+      5, 5
+    );
+  }
 
   noiseSeed(nseSeed); // Set seed for noise function
   // Draw sine wave for Stream A
@@ -64,13 +78,12 @@ function draw() {
   stroke(0, 0, 255);
   for (let i = 0; i < streamBWidth; i++) {
     let normalisedX = i / streamBWidth; // Normalize x position
-    stroke(0, 0, 255, normalisedX*255); // Set stroke color based on normalized x position
+    stroke(0, 0, 255, getRampValue(normalisedX)*255*0.3); // Set stroke color based on normalized x position
     ellipse(
       streamBStartWidth + strokeInterval * i,
       streamBStartY + noise(thisFrame + i * sin(321+i+thisFrame*0.1) * 0.05 + nseSeed) * streamBHeight,
       5, 5
     );
-    
   }
 
   noiseSeed(nseSeed+88.834); // Set seed for noise function
