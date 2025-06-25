@@ -3,8 +3,8 @@
 // Global variables for canvas dimensions
 let canvasWidth = 1200;
 let canvasHeight = 800;
-let graphsWidth; // Width of the graphs area  (960px)
-let streamCPointCount; // Number of points in Stream C curve
+let graphsWidth = canvasWidth * 0.8; ; // Width of the graphs area  (960px)
+let streamCPointCount = graphsWidth; // Number of points in Stream C curve
 let streamCVals = []; // Array to store Stream C curve values
 
 // declaring global variables for Stream A and Stream B label heights
@@ -16,8 +16,6 @@ let streamCLabelHeights = []; // Array to store heights of Stream C labels
 
 function setup() {
   createCanvas(canvasWidth, 800);
-  graphsWidth = floor(canvasWidth * 0.8); 
-  streamCPointCount = floor(graphsWidth); 
 }
 
 // define a custom ramp with 5 sampled values
@@ -77,6 +75,7 @@ function draw() {
   stroke(255, 0, 0, 255); // Red for Stream A
   noFill();
   let avgYStreamA; // average Y position for Stream A label
+  let streamALastY; // Variable to store the last Y position of Stream B
   beginShape();
   for (let x = 0; x < streamAWidth; x++) {
     let y = streamAStartY + (streamAHeight * 0.5) +
@@ -85,17 +84,17 @@ function draw() {
     let yVal = y + nse; // Calculate the final y position with noise
     vertex(streamsStartWidth + x, yVal); // plot the vertex
     if (x === streamAWidth - 1) {
-      lastYStreamA = yVal; // Store the last Y position
+      streamALastY = yVal; // Store the last Y position
     }
     // append to global array for Stream B label heights
-    streamALabelHeights.push(yVal);
+    streamALabelHeights.push(streamALastY);
     // Keep only the last 5 heights
     if (streamALabelHeights.length > streamLabelHeightsMax) {
       streamALabelHeights.shift(); // Remove the oldest height
     }
     // lerp the last 5 heights to get a stable label position
     avgYStreamA = streamALabelHeights.reduce((a, b) => a + b, 0) / streamALabelHeights.length;
-    vertex(streamsStartWidth + x, yVal); // plot the vertex
+    vertex(streamsStartWidth + x, streamALastY); // plot the vertex
   }
   endShape();
   // Add label for Stream A
@@ -120,6 +119,7 @@ function draw() {
 
   // Plot points for Stream B
   stroke(0, 0, 255, 255);
+  // console.log("streamBWidth", streamBWidth);
   for (let i = 0; i < streamBWidth; i++) {
     // make normalisedX wrap around 0-1
     let normalisedX = abs(i / streamAWidth - rampShift) % 1.0; // Normalize x position
@@ -137,8 +137,8 @@ function draw() {
   // Draw sine wave for Stream B
   stroke(0, 0, 255, 255); // Blue for Stream B
   noFill();
-  
   let avgYStreamB; // average Y position for Stream B label
+  let streamBLastY; // Variable to store the last Y position of Stream B
   beginShape();
   for (let x = 0; x < streamBWidth; x++) {
     let y = streamBStartY + (streamBHeight * 0.5) +
@@ -146,10 +146,10 @@ function draw() {
     let nse = noise(thisFrame*10 + x * 0.13) * 50; // Add noise to y position
     let yVal = y + nse; // Calculate the final y position with noise
     if (x === streamBWidth - 1) {
-      lastYStreamB = yVal; // Store the last Y position
+      streamBLastY = yVal; // Store the last Y position
     }
     // append to global array for Stream B label heights
-    streamBLabelHeights.push(yVal);
+    streamBLabelHeights.push(streamBLastY);
     // Keep only the last 5 heights
     if (streamBLabelHeights.length > streamLabelHeightsMax) {
       streamBLabelHeights.shift(); // Remove the oldest height
@@ -196,25 +196,45 @@ function draw() {
   noFill();
   beginShape();
   let avgYStreamC; // average Y position for Stream C label
-  let streamChooser = 0; // Variable to choose between Stream A and Stream B
-  
-  for (let x = 0; x < streamCWidth; x++) {
-    let y = streamCStartY + (streamCHeight * 0.5) +
-      sin(thisFrame + x * 0.02) * sineWaveHeight;
-    let nse = noise(thisFrame*10 + x * 0.13) * 50; // Add noise to y position
-    let yVal = y + nse; // Calculate the final y position with noise
-    if (x === streamCWidth - 1) {
-      lastYStreamC = yVal; // Store the last Y position
+  // Variable to choose between Stream A and Stream B
+  let streamChooser = sin(thisFrame) > 0 ? 1 : 0; 
+  // get length of streamCVals array
+  let currStreamCLen = max(1, streamCVals.length); // Ensure at least 1 length
+  currStreamCLen = min(currStreamCLen, streamCPointCount); // Limit to streamCPointCount
+  for (let x = 0; x < currStreamCLen; x++) {
+    // if not last frame, use streamCVals[x]
+    // let yVal = streamCVals[x] || 0; // Use existing value or 0 if not defined
+    let curveVal = streamCVals[x] || null; // Use existing value of StreamCVals
+    let lastStreamCArrFlag = 0; // Flag to indicate last point in StreamCVals[]
+    // let nse = noise(thisFrame*10 + x * 0.13) * 50; // Add noise to y position
+    let y;
+    let yVal; // Variable to store the final y position
+    if (curveVal === null) {
+      // If curveVal is null, it means we are at the last point of Stream C
+      // Use last Y position of Stream A or B
+      curveVal = streamChooser === 1 ? streamALastY : streamBLastY; 
+      // append global array for Stream C curve values
+      streamCVals.push(yVal); // Store the current value in the array
+      // if streamCVals length exceeds streamCPointCount, remove the oldest value
+      if (streamCVals.length > streamCPointCount) {
+        streamCVals.shift(); // Remove the oldest value
+      }
+      
+      let y = streamCStartY + (streamCHeight * 0.5) + curveVal * sineWaveHeight;
+      let yVal = y; // Calculate the final y position with noise
+      streamCLastY = yVal; // Store the last Y position
+      vertex(streamsStartWidth + x, yVal); // plot the vertex
+      // break; // exit the loop after plotting the last point
+
+      // append to global array for Stream C label heights
+      streamCLabelHeights.push(yVal);
+      // Keep only the last 5 heights
+      if (streamCLabelHeights.length > streamLabelHeightsMax) {
+        streamCLabelHeights.shift(); // Remove the oldest height
+      }
+      // lerp the last 5 heights to get a stable label position
+      avgYStreamC = streamCLabelHeights.reduce((a, b) => a + b, 0) / streamCLabelHeights.length;
     }
-    // append to global array for Stream C label heights
-    streamCLabelHeights.push(yVal);
-    // Keep only the last 5 heights
-    if (streamCLabelHeights.length > streamLabelHeightsMax) {
-      streamCLabelHeights.shift(); // Remove the oldest height
-    }
-    // lerp the last 5 heights to get a stable label position
-    avgYStreamC = streamCLabelHeights.reduce((a, b) => a + b, 0) / streamCLabelHeights.length;
-    vertex(streamsStartWidth + x, yVal); // plot the vertex
   }
   endShape();
   // Add label for Stream C
@@ -222,5 +242,4 @@ function draw() {
   noStroke();
   text("Stream C Curve", streamsStartWidth + streamCWidth + 10, avgYStreamC);
   fill (0, 0, 0, 0); // reset fill color for next drawing
-
 } // end of draw function
