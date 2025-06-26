@@ -8,7 +8,7 @@ let sineWaveHeight = 50;
 let nseSeed = 1234; // Seed for random number generation
 let streamCPointCount; // Number of points in Stream C curve
 let streamCVals = []; // Array to store Stream C curve values
-let streamsStartWidth = 50; // Starting horzizontal position for the streams
+let streamsStartX = 50; // Starting horzizontal position for the streams
 
 // declaring global variables for Stream A and Stream B label heights
 // store last 5 frames of each label height
@@ -60,6 +60,24 @@ function colourOffset(inColor, offset) {
   return color(r, g, b, a); // Return the new color
 }
 
+// Function to draw graph axes
+function drawAxes(startX, startY, endX, endY, clr, axisLabelsXY) {
+  // This function draws the axes for the graph
+  stroke(0); // Set stroke color to black
+  line(startX, endY, endX, endY); // Draw X-axis
+  line(startX, startY, startX, endY); // Draw Y-axis
+  noStroke(); // Disable stroke for text
+  fill(clr); // Set fill color for text
+  textSize(16); // Set text size
+  textAlign(CENTER, CENTER); // Center align text
+  // Draw horizontal axis label
+  text(axisLabelsXY[0], (startX + endX) / 2, endY + 20); // Draw X-axis label
+  fill(0, 0, 0, 0); // Reset fill color for next drawing
+  // Draw vertical axis label
+  textAlign(RIGHT, CENTER); // Right align text for Y-axis label
+  text(axisLabelsXY[1], startX - 20, (startY + endY) / 2); // Draw Y-axis label
+}
+
 // Function to draw Stream A graph
 function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLabel) {
   // This function draws the Stream A graph based on the provided configuration
@@ -75,13 +93,20 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
     clr,
     curveLabelHeights
   } = streamAConfig;
-  stroke(0);
-  line(streamsStartWidth, streamAEndY, streamAWidth, streamAEndY); // X-axis
-  line(streamsStartWidth, streamAStartY, streamsStartWidth, streamAEndY); // Y-axis
-  noStroke();
-  fill(colourMult(clr, [.8, 1, 1, 1])); 
-  text(graphLabel, 50, streamAStartY - 10);
-  fill (0, 0, 0, 0); // reset fill color for next drawing
+
+  // Draw axes for Stream 
+  if (graphLabel.includes("A")) {
+  drawAxes(streamsStartX, streamAStartY, 
+    streamsStartX + streamAWidth, streamAEndY, 
+    clr, [graphLabel, "Value"]); // Draw axes for Stream A
+  }
+  // stroke(0);
+  // line(streamsStartX, streamAEndY, streamAWidth, streamAEndY); // X-axis
+  // line(streamsStartX, streamAStartY, streamsStartX, streamAEndY); // Y-axis
+  // noStroke();
+  // fill(colourMult(clr, [.8, 1, 1, 1])); 
+  // text(graphLabel, streamsStartX, streamAStartY - 10); // Add label for Stream A
+  // fill (0, 0, 0, 0); // reset fill color for next drawing
 
   // Plot points for Stream A
   let numBgPts = 500; // Number of points to plot for Streams -- resolution of the graph
@@ -92,7 +117,7 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
     // Set stroke color based on normalized x position
     stroke(red(clr), green(clr), blue(clr), map(getRampValue(normalisedX),0,1,0.15,1)*255*0.3); 
     ellipse(
-      streamsStartWidth + bgPtsInterval * i,
+      streamsStartX + bgPtsInterval * i,
       streamAStartY + noise((thisFrame*0.15 + i*1) * 1.1 + nseSeed) * streamAHeight,
       5, 5
     );
@@ -111,7 +136,7 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
     let y = streamAStartY + (streamAHeight * 0.5) + sineValue * sineWaveHeight;
     let nse = noise(thisFrame * 10 + x * 0.13) * 50; // Add noise to y position
     let yVal = y + nse; // Calculate the final y position with noise
-    vertex(streamsStartWidth + x, yVal); // plot the vertex
+    vertex(streamsStartX + x, yVal); // plot the vertex
     if (x === streamAWidth - 1) {
       lastYStreamA = yVal; // Store the last Y position
     }
@@ -123,13 +148,14 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
     }
     // lerp the last 5 heights to get a stable label position
     avgYStreamA = curveLabelHeights.reduce((a, b) => a + b, 0) / curveLabelHeights.length;
-    vertex(streamsStartWidth + x, yVal); // plot the vertex
+    vertex(streamsStartX + x, yVal); // plot the vertex
   }
   endShape();
   // Add label for Stream 
   fill(clr); // color for the label
   noStroke();
-  text(`${graphLabel} Curve`, streamsStartWidth + streamAWidth + 10, avgYStreamA);
+  textAlign(LEFT, CENTER); // Right align text for Y-axis label
+  text(`${graphLabel} Curve`, streamsStartX + streamAWidth + 10, avgYStreamA);
   fill (0, 0, 0, 0); // reset fill color for next drawing
 } // end of drawStreamA function
 
@@ -184,8 +210,8 @@ function draw() {
   let streamCHeight = streamCEndY - streamCStartY;
   let streamCWidth = graphsWidth; // Width of Stream C graph;
   stroke(0);
-  line(streamsStartWidth, streamCEndY, streamCWidth, streamCEndY); // X-axis
-  line(streamsStartWidth, streamCStartY, streamsStartWidth, streamCEndY); // Y-axis
+  line(streamsStartX, streamCEndY, streamCWidth, streamCEndY); // X-axis
+  line(streamsStartX, streamCStartY, streamsStartX, streamCEndY); // Y-axis
   noStroke();
   fill(0, 50, 0, 255);
   text("Stream C", 50, streamCStartY - 10);
@@ -198,7 +224,7 @@ function draw() {
     // Set stroke color based on normalized x position
     stroke(0, 15, 0, map(getRampValue(normalisedX),0,1,0.15,1)*255*0.3); 
     ellipse(
-      streamsStartWidth + bgPtsInterval * i,
+      streamsStartX + bgPtsInterval * i,
       streamCStartY + noise((thisFrame*0.15 + i*1) * 1.1 + nseSeed) * streamCHeight,
       5, 5
     );
@@ -227,13 +253,13 @@ function draw() {
     }
     // lerp the last 5 heights to get a stable label position
     avgYStreamC = streamCLabelHeights.reduce((a, b) => a + b, 0) / streamCLabelHeights.length;
-    vertex(streamsStartWidth + x, yVal); // plot the vertex
+    vertex(streamsStartX + x, yVal); // plot the vertex
   }
   endShape();
   // Add label for Stream C
   fill(0, 50, 0, 255); // Green color for the label
   noStroke();
-  text("Stream C Curve", streamsStartWidth + streamCWidth + 10, avgYStreamC);
+  text("Stream C Curve", streamsStartX + streamCWidth + 10, avgYStreamC);
   fill (0, 0, 0, 0); // reset fill color for next drawing
   */
 } // end of draw function
