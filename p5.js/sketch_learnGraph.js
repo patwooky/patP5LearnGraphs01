@@ -83,8 +83,8 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
   // This function draws the Stream A graph based on the provided configuration
   // Destructure the streamAConfig object for easier access
   let {
-    streamAStartY,
-    streamAEndY,
+    streamStartY,
+    streamEndY,
     streamAHeight,
     streamAWidth,
     curveXOffset,
@@ -96,17 +96,10 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
 
   // Draw axes for Stream 
   if (graphLabel.includes("A")) {
-  drawAxes(streamsStartX, streamAStartY, 
-    streamsStartX + streamAWidth, streamAEndY, 
+    drawAxes(streamsStartX, streamStartY, 
+    streamsStartX + streamAWidth, streamEndY, 
     clr, [graphLabel, "Value"]); // Draw axes for Stream A
   }
-  // stroke(0);
-  // line(streamsStartX, streamAEndY, streamAWidth, streamAEndY); // X-axis
-  // line(streamsStartX, streamAStartY, streamsStartX, streamAEndY); // Y-axis
-  // noStroke();
-  // fill(colourMult(clr, [.8, 1, 1, 1])); 
-  // text(graphLabel, streamsStartX, streamAStartY - 10); // Add label for Stream A
-  // fill (0, 0, 0, 0); // reset fill color for next drawing
 
   // Plot points for Stream A
   let numBgPts = 500; // Number of points to plot for Streams -- resolution of the graph
@@ -118,7 +111,7 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
     stroke(red(clr), green(clr), blue(clr), map(getRampValue(normalisedX),0,1,0.15,1)*255*0.3); 
     ellipse(
       streamsStartX + bgPtsInterval * i,
-      streamAStartY + noise((thisFrame*0.15 + i*1) * 1.1 + nseSeed) * streamAHeight,
+      streamStartY + noise((thisFrame*0.15 + i*1) * 1.1 + nseSeed) * streamAHeight,
       5, 5
     );
   }
@@ -133,7 +126,7 @@ function drawStream(streamAConfig, thisFrame, rampShift, sineWaveHeight, graphLa
     let sineValue; // Variable to hold sine value based on graph label
     sineValue = wavefn(curveXOffset, x); // Get sine wave value
     
-    let y = streamAStartY + (streamAHeight * 0.5) + sineValue * sineWaveHeight;
+    let y = streamStartY + (streamAHeight * 0.5) + sineValue * sineWaveHeight;
     let nse = noise(thisFrame * 10 + x * 0.13) * 50; // Add noise to y position
     let yVal = y + nse; // Calculate the final y position with noise
     vertex(streamsStartX + x, yVal); // plot the vertex
@@ -172,8 +165,8 @@ function draw() {
   let streamAWidth = graphsWidth; // Width of Stream A graph
   // stream A Config
   let streamAConfig = {
-    streamAStartY: streamAStartY,
-    streamAEndY: streamAEndY,
+    streamStartY: streamAStartY,
+    streamEndY: streamAEndY,
     streamAHeight: streamAHeight,
     streamAWidth: streamAWidth,
     curveXOffset: 0, // Offset for curve X position
@@ -191,8 +184,8 @@ function draw() {
   let streamBWidth = graphsWidth; // Width of Stream B graph
 
   let streamBConfig = {
-    streamAStartY: streamBStartY,
-    streamAEndY: streamBEndY,
+    streamStartY: streamBStartY,
+    streamEndY: streamBEndY,
     streamAHeight: streamBHeight,
     streamAWidth: streamBWidth,
     curveXOffset: 23+88.834, // Offset for curve X position
